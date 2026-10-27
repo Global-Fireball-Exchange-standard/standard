@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GFE format linter</title>
+<style>
+  :root { color-scheme: light dark; --bg: #fff; --fg: #1a1a1a; --muted: #666; --box: #f4f4f4; --line: #ddd; --accent: #0b5cad; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161616; --fg: #e6e6e6; --muted: #999; --box: #222; --line: #333; --accent: #6aa8ff; }
+  }
+  body { margin: 0 auto; max-width: 860px; padding: 24px 16px; background: var(--bg); color: var(--fg);
+         font: 16px/1.5 system-ui, sans-serif; }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+  p { margin: .5rem 0; }
+  .muted { color: var(--muted); font-size: .9rem; }
+  a { color: var(--accent); }
+  input[type=file] { margin: 1rem 0; }
+  pre { background: var(--box); border: 1px solid var(--line); border-radius: 4px; padding: 12px;
+        overflow-x: auto; font-size: .82rem; line-height: 1.4; white-space: pre; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<h1>GFE format linter</h1>
+<p>Checks whether an <code>.ecsv</code> file conforms to the
+<a href="https://github.com/Global-Fireball-Exchange-standard">Global Fireball Exchange (GFE) standard</a>, version 1.2.</p>
+<p class="muted">Runs entirely in your browser; your file is not uploaded anywhere.
+The first visit downloads the Python runtime, which takes a few seconds.</p>
+<p class="muted">Prefer Jupyter? Download the <a href="GFE_format_linter.ipynb" download>notebook</a>
+and <a href="gfe_linter.py" download>gfe_linter.py</a>, or see the
+<a href="https://github.com/Global-Fireball-Exchange-standard/standard">repository</a>.</p>
+
+<p id="status">Loading Python…</p>
+<input type="file" id="file" accept=".ecsv" disabled>
+
+<pre id="out" hidden></pre>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+const ready = (async () => {
+  const pyodide = await loadPyodide();
+  $('status').textContent = 'Loading astropy…';
+  await pyodide.loadPackage(['numpy', 'astropy']);
+  const src = await (await fetch('gfe_linter.py')).text();
+  pyodide.FS.writeFile('gfe_linter.py', src);
+  return pyodide.pyimport('gfe_linter');
+})();
+
+ready.then(() => {
+  $('status').textContent = 'Ready. Choose a GFE file to check:';
+  $('file').disabled = false;
+}).catch(e => {
+  $('status').textContent = 'Failed to load Python: ' + e;
+});
+
+$('file').addEventListener('change', async ev => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const checker = await ready;
+  $('status').textContent = 'Checking ' + file.name + '…';
+  const text = await file.text();
+  try {
+    $('out').textContent = checker.check_file(text, file.name);
+  } catch (e) {
+    $('out').textContent = 'The linter failed:\n' + e;
+  }
+  $('out').hidden = false;
+  $('status').textContent = 'Choose another file to check:';
+});
+</script>
+</body>
+</html>
