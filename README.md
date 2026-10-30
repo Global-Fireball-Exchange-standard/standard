@@ -6,4 +6,6 @@ Sample data files in GFE format are included in the repository, and correspond t
 
 Jupyter code to read files in GFE format and to generate a sample GFE data file is also included, as is a Jupyter script which converts fireball single-station observations between formats.
 
+To check whether a file conforms to the standard, use the online GFE format linter at https://global-fireball-exchange-standard.github.io/standard/ (it runs in your browser; files are not uploaded), or run `GFE_format_linter.ipynb` in Jupyter. Both use the checks in `gfe_linter.py`.
+
 How did we come up with the GFE format?  It is very closely based on the Desert Fireball Network's data file format.  The selection process was completed in 2020 and is detailed in a longform draft paper available in this repository, as well as in a shortform slide pack, and also in a 9.5 minute video which is available here: https://player.vimeo.com/video/458077336
